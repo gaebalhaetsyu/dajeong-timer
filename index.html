@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>식물 성장 타이머</title>
+
+<style>
+/* ── 기본 초기화 ── /
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+/ ── 배경: 연한 초록, 중앙 정렬 ── /
+body {
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+background: #f5f9f5;
+min-height: 100vh;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+
+/ ── 카드 ── /
+.card {
+background: #fff;
+border: 1px solid #e2e8e2;
+border-radius: 20px;
+padding: 40px 28px 32px 28px;
+width: 320px;
+text-align: center;
+box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+}
+
+/ ── 완료 시 카드 좌우 흔들림 ── /
+@keyframes shake {
+0%, 100% { transform: translateX(0); }
+20%, 60%  { transform: translateX(-6px); }
+40%, 80%  { transform: translateX(6px); }
+}
+.card.shake { animation: shake 0.5s ease; }
+
+/ ── 식물 이모지 ── /
+.plant {
+font-size: 76px;
+display: block;
+margin-bottom: 8px;
+line-height: 1;
+}
+
+/ ── 성장 단계 뱃지 ── /
+.badge {
+display: inline-block;
+font-size: 12px;
+font-weight: 600;
+color: #4caf50;
+background: #edf7ee;
+padding: 3px 14px;
+border-radius: 20px;
+margin-bottom: 10px;
+}
+
+/ ── 응원 메시지 ── /
+.cheer {
+font-size: 13px;
+color: #888;
+margin-bottom: 20px;
+min-height: 18px;
+padding: 0 10px;
+}
+
+/ ── 타이머 숫자 ── /
+.timer {
+font-size: 54px;
+font-weight: 800;
+color: #1a1a1a;
+letter-spacing: 1px;
+font-variant-numeric: tabular-nums;
+margin-bottom: 8px;
+transition: color 0.3s;
+}
+.timer.done { color: #4caf50; }
+
+/ 마지막 10초 빨간 깜빡임 ── /
+@keyframes pulse {
+0%, 100% { opacity: 1; }
+50%       { opacity: 0.3; }
+}
+.timer.warning {
+color: #e53935;
+animation: pulse 0.8s infinite;
+}
+
+/ ── 완료 메시지 ── /
+.done-msg {
+font-size: 13px;
+color: #4caf50;
+height: 18px;
+margin-bottom: 16px;
+opacity: 0;
+transition: opacity 0.4s;
+}
+.done-msg.show { opacity: 1; }
+
+/ ── 진행 바 ── /
+.bar-bg {
+background: #f0f0f0;
+border-radius: 99px;
+height: 6px;
+margin-bottom: 24px;
+overflow: hidden;
+}
+.bar {
+height: 100%;
+width: 0%;
+background: #81c784;
+border-radius: 99px;
+transition: width 1s linear;
+}
+
+/ ── 시/분 입력창 깔끔한 정렬 ── /
+.input-row {
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 12px;
+margin-bottom: 20px;
+}
+.input-group {
+display: flex;
+align-items: center;
+gap: 4px;
+}
+.input-group label { font-size: 13px; color: #999; font-weight: 500; }
+.input-row input {
+width: 54px;
+padding: 6px;
+font-size: 14px;
+font-weight: 700;
+text-align: center;
+border: 1.5px solid #e2e8e2;
+border-radius: 8px;
+outline: none;
+background: #fafbfa;
+transition: border-color 0.2s;
+}
+.input-row input:focus { border-color: #4caf50; background: #fff; }
+
+/ ── 버튼 공통 ── /
+.btns { display: flex; gap: 8px; justify-content: center; margin-bottom: 24px; }
+button {
+flex: 1;
+padding: 12px 0;
+font-size: 13px;
+font-weight: 600;
+border: none;
+border-radius: 12px;
+cursor: pointer;
+min-height: 44px;
+transition: transform 0.15s, box-shadow 0.15s, opacity 0.1s;
+}
+
+button:hover:not(:disabled) {
+transform: translateY(-2px);
+box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+button:active:not(:disabled) {
+transform: translateY(0);
+opacity: 0.75;
+box-shadow: none;
+}
+button:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.btn-start { background: #4caf50; color: #fff; }
+.btn-pause { background: #ffa726; color: #fff; }
+.btn-reset { background: #f0f0ee; color: #666; }
+
+/ ── 완료 점 인디케이터 (텍스트를 지우고 이 부분을 더 강조) ── /
+.dots { display: flex; justify-content: center; gap: 10px; border-top: 1px solid #f0f4f0; padding-top: 18px; }
+.dot {
+width: 10px; height: 10px;
+border-radius: 50%;
+background: #e0e6e0;
+transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
+}
+.dot.on {
+background: #4caf50;
+transform: scale(1.2);
+box-shadow: 0 0 6px rgba(76, 175, 80, 0.4);
+}
+</style>
+</head>
+
+<body>
+<div class="card" id="card">
+<span class="plant" id="plant">⚱️</span>
+<div class="badge" id="badge">빈 화분</div>
+<div class="cheer" id="cheer">시간을 설정하고 첫 씨앗을 틔워보세요!</div>
+
+<!-- 시:분:초 포맷 타이머 -->
+<div class="timer" id="timer">00:00:00</div>
+<div class="done-msg" id="doneMsg">집중 시간을 완료했어요! 식물이 성장했어요 🌸</div>
+<div class="bar-bg"><div class="bar" id="bar"></div></div>
+
+<!-- 깔끔하게 정렬된 시/분 입력창 -->
+<div class="input-row">
+<div class="input-group">
+<input type="number" id="hourInput" value="0" min="0" max="23" />
+<label for="hourInput">시간</label>
+</div>
+<div class="input-group">
+<input type="number" id="minInput" value="25" min="0" max="59" />
+<label for="minInput">분</label>
+</div>
+</div>
+
+<!-- 컨트롤 버튼 영역 -->
+<div class="btns">
+<button class="btn-start" id="btnStart" onclick="start()">▶ 시작</button>
+<button class="btn-pause" id="btnPause" onclick="pause()" disabled>⏸ 일시정지</button>
+<!-- [UX 개선] 전체 초기화가 아니라 한 단계 빽 시켜주는 버튼 -->
+<button class="btn-reset" onclick="goBackStage()">↺ 단계 취소</button>
+</div>
+
+<!-- 중복 텍스트(완료 0/4회)를 지우고 깔끔해진 4단계 점 인디케이터 -->
+<div class="dots">
+<div class="dot" id="d0"></div>
+<div class="dot" id="d1"></div>
+<div class="dot" id="d2"></div>
+<div class="dot" id="d3"></div>
+</div>
+</div>
+
+<script>
+const INITIAL_STAGE = { emoji: '⚱️', name: '빈 화분', cheer: '시간을 설정하고 첫 씨앗을 틔워보세요!' };
+
+const STAGES = [
+{ emoji: '🌱', name: '씨앗', cheer: '첫 씨앗이 틔었어요! 꾸준히 해봐요 🌱' },
+{ emoji: '🌿', name: '새싹', cheer: '새싹이 파릇파릇 돋았어요! 잘하고 있어요 🌿' },
+{ emoji: '🍃', name: '잎새', cheer: '싱그러운 잎이 자랐어요! 거의 다 왔어요 🍃' },
+{ emoji: '🌸', name: '꽃',   cheer: '활짝 피어난 꽃처럼 완벽하게 완료했어요! 🌸' },
+];
+
+let total   = 0;
+let remain  = 0;
+let ticker  = null;
+let paused  = false;
+let done    = 0;
+
+function start() {
+if (paused) {
+paused = false;
+document.getElementById('btnStart').disabled = true;
+document.getElementById('btnPause').disabled = false;
+document.getElementById('btnStart').textContent = '▶ 시작';
+ticker = setInterval(tick, 1000);
+return;
+}
+
+// 꽃(4회) 상태에서 다시 키우기를 누르면 처음으로 리셋
+if (done >= STAGES.length) {
+done = 0;
+updateUIByStage();
+}
+
+const hours = parseInt(document.getElementById('hourInput').value) || 0;
+const mins = parseInt(document.getElementById('minInput').value) || 0;
+
+if (hours === 0 && mins === 0) return alert('시간 또는 분을 입력하세요.');
+if (hours < 0 || mins < 0 || mins > 59) return alert('올바른 시간을 입력하세요.');
+
+total  = (hours * 3600) + (mins * 60);
+remain = total;
+
+document.getElementById('doneMsg').classList.remove('show');
+document.getElementById('timer').classList.remove('done', 'warning');
+document.getElementById('btnStart').disabled = true;
+document.getElementById('btnPause').disabled = false;
+document.getElementById('hourInput').disabled = true;
+document.getElementById('minInput').disabled = true;
+showTime();
+ticker = setInterval(tick, 1000);
+}
+
+function pause() {
+clearInterval(ticker);
+paused = true;
+document.getElementById('btnStart').textContent = '▶ 재개';
+document.getElementById('btnStart').disabled    = false;
+document.getElementById('btnPause').disabled    = true;
+document.getElementById('cheer').textContent    = '잠깐 쉬어가요 ☕';
+}
+
+/ ── ⏪ [UX 대폭 개선] 전 단계로 딱 한 칸 빽(Back)하는 함수 ── /
+function goBackStage() {
+// 타이머 돌고 있었다면 멈춤 처리
+clearInterval(ticker);
+paused = false;
+total = 0;
+remain = 0;
+document.getElementById('timer').textContent = '00:00:00';
+document.getElementById('timer').classList.remove('done', 'warning');
+document.getElementById('bar').style.width = '0%';
+document.getElementById('doneMsg').classList.remove('show');
+
+// 현재 단계에서 한 단계 뒤로 돌림 (최하 0)
+if (done > 0) {
+done--;
+}
+
+// 바뀐 단계에 맞춰 화면 싹 리셋
+updateUIByStage();
+
+document.getElementById('btnStart').disabled  = false;
+document.getElementById('btnPause').disabled  = true;
+document.getElementById('hourInput').disabled = false;
+document.getElementById('minInput').disabled  = false;
+}
+
+/ ── 단계(done) 데이터에 맞추어 상단 식물, 메시지, 버튼 텍스트를 동기화하는 헬퍼 함수 ── */
+function updateUIByStage() {
+updateDots();
+if (done === 0) {
+document.getElementById('btnStart').textContent = '▶ 시작';
+document.getElementById('plant').textContent = INITIAL_STAGE.emoji;
+document.getElementById('badge').textContent = INITIAL_STAGE.name;
+document.getElementById('cheer').textContent = INITIAL_STAGE.cheer;
+} else if (done === STAGES.length) {
+document.getElementById('btnStart').textContent = '▶ 다시 키우기';
+const s = STAGES[done - 1];
+document.getElementById('plant').textContent = s.emoji;
+document.getElementById('badge').textContent = s.name;
+document.getElementById('cheer').textContent = s.cheer;
+} else {
+document.getElementById('btnStart').textContent = '▶ 다음 집중';
+const s = STAGES[done - 1];
+document.getElementById('plant').textContent = s.emoji;
+document.getElementById('badge').textContent = s.name;
+document.getElementById('cheer').textContent = s.cheer;
+}
+}
+
+function tick() {
+remain--;
+showTime();
+
+document.getElementById('bar').style.width = ((total - remain) / total * 100) + '%';
+
+if (remain <= 10 && remain > 0) {
+document.getElementById('timer').classList.add('warning');
+} else {
+document.getElementById('timer').classList.remove('warning');
+}
+
+if (remain <= 0) {
+clearInterval(ticker);
+complete();
+}
+}
+
+function complete() {
+done = Math.min(done + 1, STAGES.length + 1);
+updateUIByStage();
+
+document.getElementById('timer').classList.remove('warning');
+document.getElementById('timer').classList.add('done');
+document.getElementById('doneMsg').classList.add('show');
+document.getElementById('btnPause').disabled    = true;
+document.getElementById('hourInput').disabled   = false;
+document.getElementById('minInput').disabled    = false;
+document.getElementById('btnStart').disabled    = false;
+
+const card = document.getElementById('card');
+card.classList.add('shake');
+setTimeout(() => card.classList.remove('shake'), 500);
+}
+
+function showTime() {
+const h = String(Math.floor(remain / 3600)).padStart(2, '0');
+const m = String(Math.floor((remain % 3600) / 60)).padStart(2, '0');
+const s = String(remain % 60).padStart(2, '0');
+document.getElementById('timer').textContent = ${h}:${m}:${s};
+}
+
+function updateDots() {
+for (let i = 0; i < 4; i++) {
+document.getElementById('d' + i).classList.toggle('on', i < done);
+}
+}
+</script>
+</body>
+</html> 이걸로 다시 만들어줘 포로토타입
