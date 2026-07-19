@@ -1,390 +1,390 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>식물 성장 타이머</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>식물 성장 타이머</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* 기본 초기화 및 부드러운 폰트 적용 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+        }
 
-<style>
-/* ── 기본 초기화 ── /
-* { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f4f6f4;
+            padding: 20px;
+        }
 
-/ ── 배경: 연한 초록, 중앙 정렬 ── /
-body {
-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-background: #f5f9f5;
-min-height: 100vh;
-display: flex;
-align-items: center;
-justify-content: center;
-}
+        /* 메인 카드 레이아웃 (두 번째 이미지 스타일) */
+        .timer-card {
+            background: #ffffff;
+            border-radius: 32px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 380px;
+            padding: 40px 30px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
 
-/ ── 카드 ── /
-.card {
-background: #fff;
-border: 1px solid #e2e8e2;
-border-radius: 20px;
-padding: 40px 28px 32px 28px;
-width: 320px;
-text-align: center;
-box-shadow: 0 4px 16px rgba(0,0,0,0.07);
-}
+        /* 식물 아이콘 및 라벨 디자인 */
+        .plant-container {
+            margin-bottom: 12px;
+        }
 
-/ ── 완료 시 카드 좌우 흔들림 ── /
-@keyframes shake {
-0%, 100% { transform: translateX(0); }
-20%, 60%  { transform: translateX(-6px); }
-40%, 80%  { transform: translateX(6px); }
-}
-.card.shake { animation: shake 0.5s ease; }
+        .plant-icon {
+            font-size: 72px;
+            line-height: 1;
+            margin-bottom: 12px;
+            display: block;
+            transition: transform 0.3s ease;
+        }
 
-/ ── 식물 이모지 ── /
-.plant {
-font-size: 76px;
-display: block;
-margin-bottom: 8px;
-line-height: 1;
-}
+        .plant-icon.grow-animation {
+            transform: scale(1.15);
+        }
 
-/ ── 성장 단계 뱃지 ── /
-.badge {
-display: inline-block;
-font-size: 12px;
-font-weight: 600;
-color: #4caf50;
-background: #edf7ee;
-padding: 3px 14px;
-border-radius: 20px;
-margin-bottom: 10px;
-}
+        .status-badge {
+            background-color: #ebf7ed;
+            color: #4caf50;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            display: inline-block;
+        }
 
-/ ── 응원 메시지 ── /
-.cheer {
-font-size: 13px;
-color: #888;
-margin-bottom: 20px;
-min-height: 18px;
-padding: 0 10px;
-}
+        /* 부드러운 안내 메시지 */
+        .hint-text {
+            color: #8e9297;
+            font-size: 14px;
+            margin-bottom: 24px;
+            font-weight: 400;
+        }
 
-/ ── 타이머 숫자 ── /
-.timer {
-font-size: 54px;
-font-weight: 800;
-color: #1a1a1a;
-letter-spacing: 1px;
-font-variant-numeric: tabular-nums;
-margin-bottom: 8px;
-transition: color 0.3s;
-}
-.timer.done { color: #4caf50; }
+        /* 압도적이고 직관적인 타이머 숫자 대형화 */
+        .timer-display {
+            font-size: 56px;
+            font-weight: 800;
+            color: #1a1c1e;
+            letter-spacing: -1px;
+            margin-bottom: 24px;
+            font-variant-numeric: tabular-nums;
+        }
 
-/ 마지막 10초 빨간 깜빡임 ── /
-@keyframes pulse {
-0%, 100% { opacity: 1; }
-50%       { opacity: 0.3; }
-}
-.timer.warning {
-color: #e53935;
-animation: pulse 0.8s infinite;
-}
+        /* 구분선 */
+        .divider {
+            width: 100%;
+            height: 4px;
+            background-color: #f1f3f5;
+            border-radius: 2px;
+            margin-bottom: 28px;
+        }
 
-/ ── 완료 메시지 ── /
-.done-msg {
-font-size: 13px;
-color: #4caf50;
-height: 18px;
-margin-bottom: 16px;
-opacity: 0;
-transition: opacity 0.4s;
-}
-.done-msg.show { opacity: 1; }
+        /* 입력 폼 그리드 및 스타일 */
+        .input-group {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 28px;
+            color: #8e9297;
+            font-size: 14px;
+        }
 
-/ ── 진행 바 ── /
-.bar-bg {
-background: #f0f0f0;
-border-radius: 99px;
-height: 6px;
-margin-bottom: 24px;
-overflow: hidden;
-}
-.bar {
-height: 100%;
-width: 0%;
-background: #81c784;
-border-radius: 99px;
-transition: width 1s linear;
-}
+        .time-input {
+            width: 64px;
+            height: 40px;
+            border: 1px solid #e1e4e6;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a1c1e;
+            background-color: #ffffff;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
 
-/ ── 시/분 입력창 깔끔한 정렬 ── /
-.input-row {
-display: flex;
-align-items: center;
-justify-content: center;
-gap: 12px;
-margin-bottom: 20px;
-}
-.input-group {
-display: flex;
-align-items: center;
-gap: 4px;
-}
-.input-group label { font-size: 13px; color: #999; font-weight: 500; }
-.input-row input {
-width: 54px;
-padding: 6px;
-font-size: 14px;
-font-weight: 700;
-text-align: center;
-border: 1.5px solid #e2e8e2;
-border-radius: 8px;
-outline: none;
-background: #fafbfa;
-transition: border-color 0.2s;
-}
-.input-row input:focus { border-color: #4caf50; background: #fff; }
+        .time-input:focus {
+            border-color: #4caf50;
+        }
 
-/ ── 버튼 공통 ── /
-.btns { display: flex; gap: 8px; justify-content: center; margin-bottom: 24px; }
-button {
-flex: 1;
-padding: 12px 0;
-font-size: 13px;
-font-weight: 600;
-border: none;
-border-radius: 12px;
-cursor: pointer;
-min-height: 44px;
-transition: transform 0.15s, box-shadow 0.15s, opacity 0.1s;
-}
+        /* 입력창 화살표 제거 */
+        .time-input::-webkit-outer-spin-button,
+        .time-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
 
-button:hover:not(:disabled) {
-transform: translateY(-2px);
-box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-}
-button:active:not(:disabled) {
-transform: translateY(0);
-opacity: 0.75;
-box-shadow: none;
-}
-button:disabled { opacity: 0.35; cursor: not-allowed; }
+        /* 버튼 그룹 배치 */
+        .button-group {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            margin-bottom: 24px;
+        }
 
-.btn-start { background: #4caf50; color: #fff; }
-.btn-pause { background: #ffa726; color: #fff; }
-.btn-reset { background: #f0f0ee; color: #666; }
+        .btn {
+            flex: 1;
+            height: 48px;
+            border: none;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
 
-/ ── 완료 점 인디케이터 (텍스트를 지우고 이 부분을 더 강조) ── /
-.dots { display: flex; justify-content: center; gap: 10px; border-top: 1px solid #f0f4f0; padding-top: 18px; }
-.dot {
-width: 10px; height: 10px;
-border-radius: 50%;
-background: #e0e6e0;
-transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
-}
-.dot.on {
-background: #4caf50;
-transform: scale(1.2);
-box-shadow: 0 0 6px rgba(76, 175, 80, 0.4);
-}
-</style>
+        .btn i {
+            font-size: 13px;
+        }
+
+        /* 시작 버튼 (진한 초록색) */
+        .btn-start {
+            background-color: #4caf50;
+            color: #ffffff;
+            flex: 1.2;
+        }
+
+        .btn-start:hover {
+            background-color: #439a46;
+        }
+
+        /* 일시정지 버튼 (연한 살구빛/오렌지색) */
+        .btn-pause {
+            background-color: #ffe8cc;
+            color: #ff922b;
+        }
+
+        .btn-pause:hover {
+            background-color: #ffd8a8;
+        }
+
+        .btn-pause:disabled {
+            background-color: #f1f3f5;
+            color: #ced4da;
+            cursor: not-allowed;
+        }
+
+        /* 단계 취소 버튼 (회색빛 둥근 UX 디자인) */
+        .btn-undo {
+            background-color: #f1f3f5;
+            color: #495057;
+        }
+
+        .btn-undo:hover {
+            background-color: #e9ecef;
+        }
+
+        /* 하단 인디케이터 도트 */
+        .indicator-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background-color: #e1e4e6;
+            border-radius: 50%;
+        }
+
+        .dot.active {
+            background-color: #cbd5e1;
+        }
+    </style>
 </head>
-
 <body>
-<div class="card" id="card">
-<span class="plant" id="plant">⚱️</span>
-<div class="badge" id="badge">빈 화분</div>
-<div class="cheer" id="cheer">시간을 설정하고 첫 씨앗을 틔워보세요!</div>
 
-<!-- 시:분:초 포맷 타이머 -->
-<div class="timer" id="timer">00:00:00</div>
-<div class="done-msg" id="doneMsg">집중 시간을 완료했어요! 식물이 성장했어요 🌸</div>
-<div class="bar-bg"><div class="bar" id="bar"></div></div>
+    <div class="timer-card">
+        <!-- 식물 상태 영역 -->
+        <div class="plant-container">
+            <span id="plantIcon" class="plant-icon">🏺</span>
+            <div id="statusBadge" class="status-badge">빈 화분</div>
+        </div>
+        
+        <p class="hint-text">시간을 설정하고 첫 씨앗을 틔워보세요!</p>
 
-<!-- 깔끔하게 정렬된 시/분 입력창 -->
-<div class="input-row">
-<div class="input-group">
-<input type="number" id="hourInput" value="0" min="0" max="23" />
-<label for="hourInput">시간</label>
-</div>
-<div class="input-group">
-<input type="number" id="minInput" value="25" min="0" max="59" />
-<label for="minInput">분</label>
-</div>
-</div>
+        <!-- 대형 타이머 표시 -->
+        <div id="timerDisplay" class="timer-display">00:00:00</div>
 
-<!-- 컨트롤 버튼 영역 -->
-<div class="btns">
-<button class="btn-start" id="btnStart" onclick="start()">▶ 시작</button>
-<button class="btn-pause" id="btnPause" onclick="pause()" disabled>⏸ 일시정지</button>
-<!-- [UX 개선] 전체 초기화가 아니라 한 단계 빽 시켜주는 버튼 -->
-<button class="btn-reset" onclick="goBackStage()">↺ 단계 취소</button>
-</div>
+        <div class="divider"></div>
 
-<!-- 중복 텍스트(완료 0/4회)를 지우고 깔끔해진 4단계 점 인디케이터 -->
-<div class="dots">
-<div class="dot" id="d0"></div>
-<div class="dot" id="d1"></div>
-<div class="dot" id="d2"></div>
-<div class="dot" id="d3"></div>
-</div>
-</div>
+        <!-- 시간 입력 인터페이스 -->
+        <div class="input-group">
+            <input type="number" id="hoursInput" class="time-input" value="0" min="0" max="99">
+            <span>시간</span>
+            <input type="number" id="minutesInput" class="time-input" value="25" min="0" max="59">
+            <span>분</span>
+        </div>
 
-<script>
-const INITIAL_STAGE = { emoji: '⚱️', name: '빈 화분', cheer: '시간을 설정하고 첫 씨앗을 틔워보세요!' };
+        <!-- 액션 버튼 컴포넌트 -->
+        <div class="button-group">
+            <button id="startBtn" class="btn btn-start">
+                <i class="fa-solid fa-play"></i> 시작
+            </button>
+            <button id="pauseBtn" class="btn btn-pause" disabled>
+                <i class="fa-solid fa-pause"></i> 일시정지
+            </button>
+            <button id="undoBtn" class="btn btn-undo">
+                <i class="fa-solid fa-arrow-rotate-left"></i> 단계 취소
+            </button>
+        </div>
 
-const STAGES = [
-{ emoji: '🌱', name: '씨앗', cheer: '첫 씨앗이 틔었어요! 꾸준히 해봐요 🌱' },
-{ emoji: '🌿', name: '새싹', cheer: '새싹이 파릇파릇 돋았어요! 잘하고 있어요 🌿' },
-{ emoji: '🍃', name: '잎새', cheer: '싱그러운 잎이 자랐어요! 거의 다 왔어요 🍃' },
-{ emoji: '🌸', name: '꽃',   cheer: '활짝 피어난 꽃처럼 완벽하게 완료했어요! 🌸' },
-];
+        <!-- 하단 장식용 도트 바 -->
+        <div class="indicator-dots">
+            <div class="dot active"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+    </div>
 
-let total   = 0;
-let remain  = 0;
-let ticker  = null;
-let paused  = false;
-let done    = 0;
+    <script>
+        // 식물 성장 단계 상수화 정의
+        const GROWTH_STAGES = [
+            { level: 0, icon: '🏺', text: '빈 화분' },
+            { level: 1, icon: '🌱', text: '새싹 단계' },
+            { level: 2, icon: '🌿', text: '성장 단계' },
+            { level: 3, icon: '🌸', text: '개화 완료!' }
+        ];
 
-function start() {
-if (paused) {
-paused = false;
-document.getElementById('btnStart').disabled = true;
-document.getElementById('btnPause').disabled = false;
-document.getElementById('btnStart').textContent = '▶ 시작';
-ticker = setInterval(tick, 1000);
-return;
-}
+        let currentStageIndex = 0;
+        let countdownInterval = null;
+        let totalSecondsLeft = 0;
+        let isPaused = false;
 
-// 꽃(4회) 상태에서 다시 키우기를 누르면 처음으로 리셋
-if (done >= STAGES.length) {
-done = 0;
-updateUIByStage();
-}
+        // DOM 요소 캐싱
+        const plantIcon = document.getElementById('plantIcon');
+        const statusBadge = document.getElementById('statusBadge');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const hoursInput = document.getElementById('hoursInput');
+        const minutesInput = document.getElementById('minutesInput');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const undoBtn = document.getElementById('undoBtn');
 
-const hours = parseInt(document.getElementById('hourInput').value) || 0;
-const mins = parseInt(document.getElementById('minInput').value) || 0;
+        // 타이머 시각화 업데이트 함수
+        function updateDisplay(seconds) {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = seconds % 60;
+            
+            timerDisplay.textContent = 
+                `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
 
-if (hours === 0 && mins === 0) return alert('시간 또는 분을 입력하세요.');
-if (hours < 0 || mins < 0 || mins > 59) return alert('올바른 시간을 입력하세요.');
+        // 식물 UI 갱신 및 애니메이션 로직
+        function updatePlantUI() {
+            const stage = GROWTH_STAGES[currentStageIndex];
+            plantIcon.textContent = stage.icon;
+            statusBadge.textContent = stage.text;
+            
+            // 시각적 피드백 효과 유도
+            plantIcon.classList.add('grow-animation');
+            setTimeout(() => {
+                plantIcon.classList.remove('grow-animation');
+            }, 300);
+        }
 
-total  = (hours * 3600) + (mins * 60);
-remain = total;
+        // 타이머 시작 및 재개 로직
+        function startTimer() {
+            if (!isPaused) {
+                const hours = parseInt(hoursInput.value) || 0;
+                const minutes = parseInt(minutesInput.value) || 0;
+                totalSecondsLeft = (hours * 3600) + (minutes * 60);
 
-document.getElementById('doneMsg').classList.remove('show');
-document.getElementById('timer').classList.remove('done', 'warning');
-document.getElementById('btnStart').disabled = true;
-document.getElementById('btnPause').disabled = false;
-document.getElementById('hourInput').disabled = true;
-document.getElementById('minInput').disabled = true;
-showTime();
-ticker = setInterval(tick, 1000);
-}
+                if (totalSecondsLeft <= 0) {
+                    alert('타이머 시간을 설정해 주세요!');
+                    return;
+                }
+            }
 
-function pause() {
-clearInterval(ticker);
-paused = true;
-document.getElementById('btnStart').textContent = '▶ 재개';
-document.getElementById('btnStart').disabled    = false;
-document.getElementById('btnPause').disabled    = true;
-document.getElementById('cheer').textContent    = '잠깐 쉬어가요 ☕';
-}
+            // UI 제어 상태 변환
+            startBtn.disabled = true;
+            pauseBtn.disabled = false;
+            hoursInput.disabled = true;
+            minutesInput.disabled = true;
+            isPaused = false;
 
-/ ── ⏪ [UX 대폭 개선] 전 단계로 딱 한 칸 빽(Back)하는 함수 ── /
-function goBackStage() {
-// 타이머 돌고 있었다면 멈춤 처리
-clearInterval(ticker);
-paused = false;
-total = 0;
-remain = 0;
-document.getElementById('timer').textContent = '00:00:00';
-document.getElementById('timer').classList.remove('done', 'warning');
-document.getElementById('bar').style.width = '0%';
-document.getElementById('doneMsg').classList.remove('show');
+            countdownInterval = setInterval(() => {
+                if (totalSecondsLeft > 0) {
+                    totalSecondsLeft--;
+                    updateDisplay(totalSecondsLeft);
+                } else {
+                    clearInterval(countdownInterval);
+                    handleTimerComplete();
+                }
+            }, 1000);
+        }
 
-// 현재 단계에서 한 단계 뒤로 돌림 (최하 0)
-if (done > 0) {
-done--;
-}
+        // 일시정지 처리 핸들러
+        function pauseTimer() {
+            clearInterval(countdownInterval);
+            isPaused = true;
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+        }
 
-// 바뀐 단계에 맞춰 화면 싹 리셋
-updateUIByStage();
+        // 타이머 만료 시 성장 스텝 제어
+        function handleTimerComplete() {
+            if (currentStageIndex < GROWTH_STAGES.length - 1) {
+                currentStageIndex++;
+                updatePlantUI();
+            }
+            resetInputState();
+            alert('집중 시간이 완료되었어요! 식물이 한 단계 성장했습니다! 🎉');
+        }
 
-document.getElementById('btnStart').disabled  = false;
-document.getElementById('btnPause').disabled  = true;
-document.getElementById('hourInput').disabled = false;
-document.getElementById('minInput').disabled  = false;
-}
+        // 취소(Undo) 기능의 UX 예외 처리 로직 반영
+        function undoStage() {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+            
+            if (currentStageIndex > 0) {
+                currentStageIndex--;
+                updatePlantUI();
+                alert('이전 단계로 안전하게 되돌렸습니다.');
+            } else {
+                alert('현재 가장 첫 번째 단계(빈 화분)입니다.');
+            }
+            resetInputState();
+        }
 
-/ ── 단계(done) 데이터에 맞추어 상단 식물, 메시지, 버튼 텍스트를 동기화하는 헬퍼 함수 ── */
-function updateUIByStage() {
-updateDots();
-if (done === 0) {
-document.getElementById('btnStart').textContent = '▶ 시작';
-document.getElementById('plant').textContent = INITIAL_STAGE.emoji;
-document.getElementById('badge').textContent = INITIAL_STAGE.name;
-document.getElementById('cheer').textContent = INITIAL_STAGE.cheer;
-} else if (done === STAGES.length) {
-document.getElementById('btnStart').textContent = '▶ 다시 키우기';
-const s = STAGES[done - 1];
-document.getElementById('plant').textContent = s.emoji;
-document.getElementById('badge').textContent = s.name;
-document.getElementById('cheer').textContent = s.cheer;
-} else {
-document.getElementById('btnStart').textContent = '▶ 다음 집중';
-const s = STAGES[done - 1];
-document.getElementById('plant').textContent = s.emoji;
-document.getElementById('badge').textContent = s.name;
-document.getElementById('cheer').textContent = s.cheer;
-}
-}
+        // 입력 폼 초기화 전용 공통 함수
+        function resetInputState() {
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+            hoursInput.disabled = false;
+            minutesInput.disabled = false;
+            isPaused = false;
+            updateDisplay(0);
+        }
 
-function tick() {
-remain--;
-showTime();
+        // 이벤트 리스너 바인딩
+        startBtn.addEventListener('click', startTimer);
+        pauseBtn.addEventListener('click', pauseTimer);
+        undoBtn.addEventListener('click', undoStage);
 
-document.getElementById('bar').style.width = ((total - remain) / total * 100) + '%';
-
-if (remain <= 10 && remain > 0) {
-document.getElementById('timer').classList.add('warning');
-} else {
-document.getElementById('timer').classList.remove('warning');
-}
-
-if (remain <= 0) {
-clearInterval(ticker);
-complete();
-}
-}
-
-function complete() {
-done = Math.min(done + 1, STAGES.length + 1);
-updateUIByStage();
-
-document.getElementById('timer').classList.remove('warning');
-document.getElementById('timer').classList.add('done');
-document.getElementById('doneMsg').classList.add('show');
-document.getElementById('btnPause').disabled    = true;
-document.getElementById('hourInput').disabled   = false;
-document.getElementById('minInput').disabled    = false;
-document.getElementById('btnStart').disabled    = false;
-
-const card = document.getElementById('card');
-card.classList.add('shake');
-setTimeout(() => card.classList.remove('shake'), 500);
-}
-
-function showTime() {
-const h = String(Math.floor(remain / 3600)).padStart(2, '0');
-const m = String(Math.floor((remain % 3600) / 60)).padStart(2, '0');
-const s = String(remain % 60).padStart(2, '0');
-document.getElementById('timer').textContent = ${h}:${m}:${s};
-}
-
-function updateDots() {
-for (let i = 0; i < 4; i++) {
-document.getElementById('d' + i).classList.toggle('on', i < done);
-}
-}
-</script>
+        // 초기 화면 세팅
+        updateDisplay(0);
+    </script>
 </body>
-</html> 이걸로 다시 만들어줘 포로토타입
+</html>
