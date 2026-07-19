@@ -23,7 +23,7 @@
             padding: 20px;
         }
 
-        /* 메인 카드 레이아웃 (두 번째 이미지 스타일) */
+        /* 메인 카드 레이아웃 */
         .timer-card {
             background: #ffffff;
             border-radius: 32px;
@@ -81,6 +81,19 @@
             letter-spacing: -1px;
             margin-bottom: 24px;
             font-variant-numeric: tabular-nums;
+            transition: color 0.3s ease;
+        }
+
+        /* ⭐ 10초 미만일 때 타이머 숫자를 빨간색으로 변경하고 깜빡이는 효과 */
+        .timer-display.danger {
+            color: #e03131;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
         }
 
         /* 구분선 */
@@ -155,7 +168,7 @@
             font-size: 13px;
         }
 
-        /* 시작 버튼 (진한 초록색) */
+        /* 시작 버튼 */
         .btn-start {
             background-color: #4caf50;
             color: #ffffff;
@@ -166,7 +179,7 @@
             background-color: #439a46;
         }
 
-        /* 일시정지 버튼 (연한 살구빛/오렌지색) */
+        /* 일시정지 버튼 */
         .btn-pause {
             background-color: #ffe8cc;
             color: #ff922b;
@@ -182,7 +195,7 @@
             cursor: not-allowed;
         }
 
-        /* 단계 취소 버튼 (회색빛 둥근 UX 디자인) */
+        /* 단계 취소 버튼 */
         .btn-undo {
             background-color: #f1f3f5;
             color: #495057;
@@ -327,8 +340,16 @@
                 if (totalSecondsLeft > 0) {
                     totalSecondsLeft--;
                     updateDisplay(totalSecondsLeft);
+                    
+                    // ⭐ 10초 이하로 남았을 때 빨간색 위험 스타일(danger 클래스) 적용
+                    if (totalSecondsLeft <= 10) {
+                        timerDisplay.classList.add('danger');
+                    } else {
+                        timerDisplay.classList.remove('danger');
+                    }
                 } else {
                     clearInterval(countdownInterval);
+                    timerDisplay.classList.remove('danger'); // 완료 시 글자색 초기화
                     handleTimerComplete();
                 }
             }, 1000);
@@ -375,6 +396,7 @@
             hoursInput.disabled = false;
             minutesInput.disabled = false;
             isPaused = false;
+            timerDisplay.classList.remove('danger'); // ⭐ 취소나 리셋 시 빨간 불 꺼지도록 조치
             updateDisplay(0);
         }
 
