@@ -314,6 +314,16 @@
             setTimeout(() => {
                 plantIcon.classList.remove('grow-animation');
             }, 300);
+
+            // 도트 인디케이터 상태 연동
+            const dots = document.querySelectorAll('.indicator-dots .dot');
+            dots.forEach((dot, index) => {
+                if (index === currentStageIndex) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
         }
 
         // 타이머 시작 및 재개 로직
@@ -370,6 +380,12 @@
                 updatePlantUI();
             }
             resetInputState();
+
+            // 💓 [추가] 모바일/태블릿 기기 1초간 진동 피드백 작동
+            if (navigator.vibrate) {
+                navigator.vibrate(1000);
+            }
+
             alert('집중 시간이 완료되었어요! 식물이 한 단계 성장했습니다! 🎉');
         }
 
